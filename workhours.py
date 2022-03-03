@@ -4,7 +4,6 @@ from operator import le
 import argparse
 import os
 import sys
-import time
 
 # Using hardcoded hours range and hourly payment, this could be cleaner if stored in a db for example sqlite
 weekhours = ["00:00", "09:00", "18:00"]
@@ -144,15 +143,13 @@ class Employee:
         return print("The total hours worked by {} are {}".format(self.employeeName, self.hoursCalculation.GetTotalhoursWorked()))
 
     def GetEmployeeTotalPayment(self):
-        return print("The amount to pay {} is: {} USD".format(self.employeeName, self.hoursCalculation.GetTotalPaymentWorked()))
+        return print("The amount to pay {} is: {} USD".format(self.employeeName, round(self.hoursCalculation.GetTotalPaymentWorked(), 2)))
 
 if __name__ == '__main__':
-    # print(datetime.strptime("00:03", "%H:%M") - datetime.strptime("00:01", "%H:%M"))
-    # new = Employee("RENE=MO10:00-12:00,TU10:00-12:00,TH01:00-03:00,SA14:00-18:00,SU20:00-21:00")
     with open(args.file) as fp:
         lines = fp.readlines()
         for line in lines:
             newEmployee = Employee(line)
             newEmployee.GetEmployeeTotalPayment()
-            newEmployee.GetEmployeeTotalHours()
+            # newEmployee.GetEmployeeTotalHours()
     
