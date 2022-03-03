@@ -16,9 +16,8 @@ nameDays = {"MO": "Monday", "TU": "Tuesday", "WE": "Wednesday", "TH": "Thursday"
 
 # Set mandatory arguments needed
 parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--file", help="File that contains information of the times work by one or many Employees",
-                    action="store_true", required=True)
-args = parser.parse_args()
+parser.add_argument("-f", "--file", dest="file", help="File that contains information of the times work by one or many Employees", required=True)
+args, unknown = parser.parse_known_args()
 
 # Check if file provided exists
 isFile = os.path.isfile(args.file)
@@ -36,7 +35,7 @@ class CalculateHourPayment:
 
     def __CalcHours(self, dayType, hours):
         # Remove spaces from hours to simplify calculations
-        splitHours = hours.replace(" ", "").split("-")
+        splitHours = hours.replace(" ", "").replace("\n", "").split("-")
         indexFirstTime = 0
         indexSecondTime = 0
         firstTime = datetime.strptime(splitHours[0], "%H:%M")
@@ -93,23 +92,23 @@ class CalculateHourPayment:
 
                 # Add total hours worked
                 self.totalHoursWorked += timeDifferenceFloat
-            
-            # If the range provided is going across more than one time interval, this section will check that case
-            for indexBase in range(indexFirstTime, indexSecondTime, 1):
-                # Get the time difference between our time and the next interval after our first time provided
-                timeDifferenceFloatSecond = (secondTime - datetime.strptime(self.weekHours[indexBase + 1], "%H:%M")).seconds / 3600
-                timeDifferenceConsecutive = (datetime.strptime(self.weekHours[indexBase + 1], "%H:%M") - datetime.strptime(self.weekHours[indexBase], "%H:%M")).seconds / 3600
-                
-                # If the difference calculated for our second time is greater than the difference between the next interval after the first time
-                # then we are sure the finish time (second time) is not in this interval 
-                if timeDifferenceFloatSecond > timeDifferenceConsecutive:
-                    timeDifferenceFloatSecond = timeDifferenceConsecutive
+            else:
+                # If the range provided is going across more than one time interval, this section will check that case
+                for indexBase in range(indexFirstTime, indexSecondTime, 1):
+                    # Get the time difference between our time and the next interval after our first time provided
+                    timeDifferenceFloatSecond = (secondTime - datetime.strptime(self.weekHours[indexBase + 1], "%H:%M")).seconds / 3600
+                    timeDifferenceConsecutive = (datetime.strptime(self.weekHours[indexBase + 1], "%H:%M") - datetime.strptime(self.weekHours[indexBase], "%H:%M")).seconds / 3600
+                    
+                    # If the difference calculated for our second time is greater than the difference between the next interval after the first time
+                    # then we are sure the finish time (second time) is not in this interval 
+                    if timeDifferenceFloatSecond > timeDifferenceConsecutive:
+                        timeDifferenceFloatSecond = timeDifferenceConsecutive
 
-                # Calculate the time difference with respect on the current interval being iterated
-                self.totalPayment += timeDifferenceFloatSecond * paymentRange[indexBase + 1]
+                    # Calculate the time difference with respect on the current interval being iterated
+                    self.totalPayment += timeDifferenceFloatSecond * paymentRange[indexBase + 1]
 
-                # Add total hours worked
-                self.totalHoursWorked += timeDifferenceFloatSecond
+                    # Add total hours worked
+                    self.totalHoursWorked += timeDifferenceFloatSecond
 
     def AddHoursWorked(self, dayRangeData):
         dayInitials = dayRangeData[0:2]
@@ -139,7 +138,6 @@ class Employee:
     
     def ProcessHoursWorked(self, hourString):
         for section in self.splitInfo[1].split(","):
-            print(section)
             self.hoursCalculation.AddHoursWorked(section)
 
     def GetEmployeeTotalHours(self):
@@ -151,7 +149,10 @@ class Employee:
 if __name__ == '__main__':
     # print(datetime.strptime("00:03", "%H:%M") - datetime.strptime("00:01", "%H:%M"))
     # new = Employee("RENE=MO10:00-12:00,TU10:00-12:00,TH01:00-03:00,SA14:00-18:00,SU20:00-21:00")
-    new = Employee("ASTRID=MO10:00-12:00,TH12:00-14:00,SU20:00-21:00")
-    new.GetEmployeeTotalPayment()
-    new.GetEmployeeTotalHours()
+    with open(args.file) as fp:
+        lines = fp.readlines()
+        for line in lines:
+            newEmployee = Employee(line)
+            newEmployee.GetEmployeeTotalPayment()
+            newEmployee.GetEmployeeTotalHours()
     
